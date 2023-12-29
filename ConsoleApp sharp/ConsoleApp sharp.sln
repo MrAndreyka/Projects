@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.33328.57
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp sharp", "ConsoleApp sharp\ConsoleApp sharp.csproj", "{86AFAA6F-4C0D-4183-B6C0-A6046C12DFB4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5B1A82D9-130D-4054-AADB-18932AA1E016}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{86AFAA6F-4C0D-4183-B6C0-A6046C12DFB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86AFAA6F-4C0D-4183-B6C0-A6046C12DFB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86AFAA6F-4C0D-4183-B6C0-A6046C12DFB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86AFAA6F-4C0D-4183-B6C0-A6046C12DFB4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {10FB98D1-08FC-4A18-AEDA-03E62AB91635}
+	EndGlobalSection
+EndGlobal

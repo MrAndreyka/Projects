@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="..\..\..\..\..\My Doc%27s\Visual Studio 2019\Projects\D3D_Framework\D3D_Framework\macros.h" />
+    <ClInclude Include="..\..\..\..\..\My Doc%27s\Visual Studio 2019\Projects\D3D_Framework\D3D_Framework\Log.h" />
+    <ClInclude Include="..\..\..\..\..\My Doc%27s\Visual Studio 2019\Projects\D3D_Framework\D3D_Framework\InputCodes.h" />
+    <ClInclude Include="..\..\..\..\..\My Doc%27s\Visual Studio 2019\Projects\D3D_Framework\D3D_Framework\InputListener.h" />
+    <ClInclude Include="..\..\..\..\..\My Doc%27s\Visual Studio 2019\Projects\D3D_Framework\D3D_Framework\InputMgr.h" />
+    <ClInclude Include="..\..\..\..\..\My Doc%27s\Visual Studio 2019\Projects\D3D_Framework\D3D_Framework\Window.h" />
+    <ClInclude Include="..\..\..\..\..\My Doc%27s\Visual Studio 2019\Projects\D3D_Framework\D3D_Framework\Render.h" />
+    <ClInclude Include="..\..\..\..\..\My Doc%27s\Visual Studio 2019\Projects\D3D_Framework\D3D_Framework\Framework.h" />
+    <ClInclude Include="..\..\..\..\..\My Doc%27s\Visual Studio 2019\Projects\D3D_Framework\D3D_Framework\D3D11_Framework.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="..\..\..\..\..\My Doc%27s\Visual Studio 2019\Projects\D3D_Framework\D3D_Framework\Log.cpp" />
+    <ClCompile Include="..\..\..\..\..\My Doc%27s\Visual Studio 2019\Projects\D3D_Framework\D3D_Framework\InputMgr.cpp" />
+    <ClCompile Include="..\..\..\..\..\My Doc%27s\Visual Studio 2019\Projects\D3D_Framework\D3D_Framework\Window.cpp" />
+    <ClCompile Include="..\..\..\..\..\My Doc%27s\Visual Studio 2019\Projects\D3D_Framework\D3D_Framework\Render.cpp" />
+    <ClCompile Include="..\..\..\..\..\My Doc%27s\Visual Studio 2019\Projects\D3D_Framework\D3D_Framework\Framework.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Common System">
+      <UniqueIdentifier>{84351ffa-bc17-492f-bc0f-49c8e23f4abd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Input System">
+      <UniqueIdentifier>{1dd72510-3d1e-4d6f-85f2-f4f087d4ae82}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render System">
+      <UniqueIdentifier>{f0340b90-a763-4485-8120-bfbee64f30c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Util System">
+      <UniqueIdentifier>{a54a81c2-67f3-43fe-b6b6-abf9b8a2deee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework System">
+      <UniqueIdentifier>{64a954d2-11b2-4551-b50b-44ea7f49d021}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
