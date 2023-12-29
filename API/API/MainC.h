@@ -12,6 +12,6 @@
 #include <string>
 #include <algorithm>
 
-#include <forward_list>
+#include <list>
 
 using namespace std;
