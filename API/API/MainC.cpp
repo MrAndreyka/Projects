@@ -1,11 +1,11 @@
 #include "mainC.h"
+#include "..\..\Iincludes\Rect_Point.h"
 
-HDC hdc, secondHdc;
-
-//HDC thirdHdc;
+HDC secondHdc;
+HWND hWnd;
 
 POINT ClSize, M;
-//HBITMAP bMap;
+
 
 float GetY1(float x){
 	return cos(x * 2) * (cos(x * 3) - 1) + sin(-x);
@@ -40,6 +40,23 @@ public:
 const int points(5), range(3), mtf(7);
 BYTE tf = 0, rp = 3, sauto = 0;
 
+class MyPen {
+public:
+	HPEN pen = NULL;
+	COLORREF color = 0;
+	void Set(HDC hdc, int width, COLORREF color) {
+		if (color != this->color) {
+			if(pen != NULL) 
+				DeleteObject(pen);
+			pen = CreatePen(PS_SOLID, width, color);
+			SelectObject(hdc, pen);
+		}
+
+	}
+};
+
+MyPen PEN;
+
 fun_dat mf[] = {
 	fun_dat("cos(x*2) * (cos(x*3)-1) + sin(-x)", 0x0000ff, GetY1),
 	fun_dat("cos(x * 2)* cos(-x)", 0x00ff00, GetY2),
@@ -58,14 +75,15 @@ public:
 	DWORD r;
 	T val;
 
-	void Show(HDC dc) {
-		SetDCBrushColor(dc, Color);
-		Ellipse(dc, x - r, y - r, x + r, y + r);
+	void Show(HDC hdc) {
+		SetDCBrushColor(hdc, Color);
+		Ellipse(hdc, x - r, y - r, x + r, y + r);
 	}
 
-	void ShowLine(HDC dc) {
-		SetDCPenColor(dc, Color);
-		LineTo(dc, x, y);
+	void ShowLine(HDC hdc, MyPen& pen) {
+		//SetDCPenColor(hdc, Color);
+		pen.Set(hdc, r, Color);
+		LineTo(hdc, x, y);
 	}
 
 	bool go(DWORD ct)
@@ -82,7 +100,7 @@ public:
 		if (live - d < live / 2)
 		{
 			y--; 
-			//r++;
+			r++;
 		}
 
 		return live > d;
@@ -90,26 +108,24 @@ public:
 	void setLive(DWORD live_) { live = live_;}
 	void setColor(COLORREF col) { Color = col; ColorDef = col; }
 
-//private:
+private:
 	DWORD pc=0;
 	DWORD live = 0;
 	COLORREF Color,ColorDef = 0;
 };
 
-//bool compareInterval(MyLivePoint &a, MyLivePoint &b) { return a.right > b.right; }
 list<MyLivePoint<bool>> lst;
 
 BOOL pause = true, showInfo = false, step_stop = false, lines = true;
 
 void get_graph() {
-	cout << " *";
-	SelectObject(secondHdc, GetStockObject(DC_PEN));
+	auto prev_pen = SelectObject(secondHdc, GetStockObject(DC_PEN));
+	SetDCPenColor(secondHdc, RGB(80,80,80));
+
 	MoveToEx(secondHdc, ClSize.x / 2, 0, NULL);
 	LineTo(secondHdc, ClSize.x / 2, ClSize.y);
 	MoveToEx(secondHdc, 0, ClSize.y / 2, NULL);
 	LineTo(secondHdc, ClSize.x, ClSize.y / 2);
-
-	SelectObject(secondHdc, GetStockObject(BLACK_BRUSH));
 
 	for (int c, i = max(ClSize.y, ClSize.x) / M.x / 2; i > 0; i--)
 	{
@@ -127,127 +143,58 @@ void get_graph() {
 		MoveToEx(secondHdc, ClSize.x / 2 - 3, c, NULL);
 		LineTo(secondHdc, ClSize.x / 2 + 3, c);
 	}
+	SelectObject(secondHdc, prev_pen);
 }
 
-void ShowWin()
-{
+
+void ShowWin(){
 	SelectObject(secondHdc, GetStockObject(BLACK_BRUSH));
-	Rectangle(secondHdc, 0, 0, ClSize.x + 1, ClSize.y + 1);
-
-	SelectObject(secondHdc, GetStockObject(DC_PEN));
-	SelectObject(secondHdc, GetStockObject(DC_BRUSH));
-
-	//bool vg = true;
-	//if(lst.begin() != lst.end())
-  	//	Rectangle(secondHdc, lst.begin()->x, lst.begin()->y, lst.begin()->x + 4, lst.begin()->y + 4);
-	//for (auto a : lst) Rectangle(secondHdc, a.x, a.y, a.x + 4, a.y + 4);
-		//a.Show(secondHdc);
-//	{
-		//SetDCPenColor(secondHdc, a.Color);
-		/*if (lines and a.val) continue;
-		if (vg and !a.val) {
-			get_graph();
-			vg = false;
-			MoveToEx(secondHdc, 0, a.y - 1, NULL);
-			cout << "==========\nMoveToEx(secondHdc, " << 0 << ", " << a.y - 1 << ");" << endl;
-		}*/
-
-		//a.Show(secondHdc);
-
-//	}
-	SetDCPenColor(secondHdc, 355);
-	get_graph();
-
-	if(lst.begin() != lst.end())
-	{
- 		get_graph();
-	}
-	if (showInfo)
-		for (int i = 0; i < mtf; i++)
-		{
-			RECT R = { 5 , 5 + i * 20, 300, 20 + i * 20 };
-			SetBkColor(secondHdc, mf[i].color);
-			auto s = to_string(i + 1) + " - " + mf[i].Name;
-			DrawText(secondHdc, s.c_str(), s.length(), &R, NULL);
-		}
-
-	BitBlt(hdc, 0, 0, ClSize.x, ClSize.y, secondHdc, 0, 0, SRCCOPY);
-}
-
-/*
-void ShowWin2()
-{
-	SelectObject(secondHdc, GetStockObject(BLACK_BRUSH));
+	SelectObject(secondHdc, GetStockObject(NULL_PEN));
 	Rectangle(secondHdc, 0, 0, ClSize.x+1, ClSize.y+1);	
 	
-	//SelectObject(secondHdc, GetStockObject(NULL_PEN));
-	SelectObject(secondHdc, GetStockObject(DC_BRUSH));
-	SelectObject(secondHdc, GetStockObject(DC_PEN));
+	//SelectObject(secondHdc, GetStockObject(DC_BRUSH));
+	//SelectObject(secondHdc, GetStockObject(DC_PEN));
+
 	if(lines)
-		SelectObject(secondHdc, GetStockObject(DC_PEN));
+   		SelectObject(secondHdc, PEN.pen);
 	else
-		SelectObject(secondHdc, GetStockObject(DC_BRUSH));
-
-	bool vg = true;
-
-	auto b = lst.begin();
-	while(b!= lst.end())
-	//for (auto& a : lst) 
 	{
- 		auto& a = *b;
-		b++;
-		SetDCPenColor(secondHdc, a.Color);
-		if (lines and a.val) continue;
-		if (vg and !a.val) { 
-			get_graph();
-			vg = false;
-			MoveToEx(secondHdc, 0, a.y-1, NULL);
-			cout << "==========\nMoveToEx(secondHdc, " << 0 << ", " << a.y-1 << ");" << endl;
-		}
-
-		LineTo(secondHdc, a.x, a.y);
-		cout << "LineTo(secondHdc, "<< a.x << ", " << a.y << ");" << endl;
-		LineTo(secondHdc, a.x, a.y);
-
-		/*if (lines) //a.ShowLine(secondHdc);
- 			LineTo(secondHdc, a.x, a.y);
-		else a.Show(secondHdc);
-		
+		SelectObject(secondHdc, GetStockObject(NULL_PEN));
+		SelectObject(secondHdc, GetStockObject(DC_BRUSH));
 	}
 
-	get_graph();
+	for (auto& a : lst) {
+		if (a.val) {
+			get_graph();
+			MoveToEx(secondHdc, a.x, a.y, NULL);
+		}
+		else if (lines)
+			a.ShowLine(secondHdc, PEN);
+		else
+			a.Show(secondHdc);
+	}
+
 	if (showInfo)
-		for (int i = 0; i < mtf; i++)
-		{
+		for (int i = 0; i < mtf; i++){
 			RECT R = { 5 , 5 + i * 20, 300, 20 + i * 20 };
 			SetBkColor(secondHdc, mf[i].color);
 			auto s = to_string(i + 1) + " - " + mf[i].Name;
 			DrawText(secondHdc, s.c_str(), s.length(), &R, NULL);
 		}
 
-	BitBlt(hdc, 0, 0, ClSize.x, ClSize.y, secondHdc, 0, 0, SRCCOPY);
-}*/
+	InvalidateRect(hWnd, NULL, true);
+}
  
-void ActionWin(HWND hWnd, DWORD cou)
-{
+void ActionWin(DWORD cou){
     static DWORD ct = 0; ct += cou;
 
-	int count = lst.size();
-	/*auto current = lst.begin(), prev = lst.before_begin();
-	while (current != lst.end())
-		if (!current->go(ct))
-		{
-			lst.erase_after(current = prev);
-			current++;
-		}
-		else
-		{
-			prev = current++;
-			count++;
-		}*/
+	lst.remove_if([](auto& a) {return !a.go(ct); });
+	if (lst.size() > 0 && !lst.begin()->val)
+		lst.begin()->val = true;
 
 	static int X = 0;
 	cou = (cou / 1000.0) * M.y;
+
 	   	
 	while (cou-- > 0 and !step_stop) {
 
@@ -258,27 +205,34 @@ void ActionWin(HWND hWnd, DWORD cou)
 
 		v.x = x * M.x + ClSize.x / 2.0;
 		v.y = y * M.x + ClSize.y / 2.0;
-		v.val = false;
+		v.val = X == 0;
 
 		v.r = rp;
 		v.setLive(3500);
 		v.setColor(mf[tf].color);
 
-		lst.emplace_back(v);
-		count++;
+ 		lst.push_back(v);
 		
 		X += range;
 
-		if (X > ClSize.x)
+		if (X > ClSize.x) {
+			X = 0;
+			if (++tf == mtf) tf = 0;
+		}
+
+		/*if (X > ClSize.x)
 		{
 			X = 0;
 			if (++tf == mtf) tf = 0;
 			
 			static auto b = lst.begin();
-			if (!lst.begin()->val) b = lst.begin();
+			if (!lst.begin()->val) 
+				b = lst.begin();
 			std::for_each(b, lst.end(), [](auto& a) {a.val = true; });
+			b = lst.end();
+			b--;
 
-		}
+		}*/
 	}
 
 	//printf(" /  %d\n", count);
@@ -319,10 +273,15 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 			break;
 		case 105:
 			showInfo = !showInfo;
+			ShowWin();
+			break;
+		case 108:
+			lines = !lines;
+			ShowWin();
 			break;
 		case 32:
 		{
-			ActionWin(hWnd, M.y/20);
+			ActionWin(M.y/20);
 			ShowWin();
 		}	break;
 		case 43:
@@ -347,9 +306,10 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
 		SetWindowText(hWnd, s.c_str());
 
-		HBITMAP bMap = CreateCompatibleBitmap(hdc, ClSize.x, ClSize.y);
+		HBITMAP bMap = CreateCompatibleBitmap(GetDC(hWnd), ClSize.x, ClSize.y);
 		DeleteObject(SelectObject(secondHdc, bMap));
 		lst.clear();
+		ShowWin();
 		break;
 	}
 
@@ -359,8 +319,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 	{
 		PAINTSTRUCT ps;
-		HDC hdc2 = BeginPaint(hWnd, &ps); 
-		BitBlt(hdc2, 0, 0, ClSize.x, ClSize.y, secondHdc, 0, 0, SRCCOPY);
+		auto hdc = BeginPaint(hWnd, &ps); 
+		BitBlt(hdc, 0, 0, ClSize.x, ClSize.y, secondHdc, 0, 0, SRCCOPY);
 		EndPaint(hWnd, &ps);
 		break;
 	}
@@ -370,8 +330,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	default: return DefWindowProcW(hWnd, Msg, wParam, lParam);
 	}
 
-	if(hdc != NULL)
-		ReleaseDC(hWnd, hdc);
+	//if(hdc != NULL)	ReleaseDC(hWnd, hdc);
 	return 0;
 }
 
@@ -388,19 +347,14 @@ int main()
 	if (!RegisterClassW(&wlc))
 		return 0;
 
-	HWND hwnd = CreateWindowExW(WS_EX_APPWINDOW, L"MyApiClass", L"My window", WS_OVERLAPPEDWINDOW, 100,  100, 800, 600, NULL, NULL, NULL, NULL);
-	hdc = GetDC(hwnd);
+	hWnd = CreateWindowExW(WS_EX_APPWINDOW, L"MyApiClass", L"My window", WS_OVERLAPPEDWINDOW, 100,  100, 800, 600, NULL, NULL, NULL, NULL);
+	auto hdc = GetDC(hWnd);
 
 	secondHdc = CreateCompatibleDC(hdc);
-	HBITMAP bMap = CreateCompatibleBitmap(hdc, ClSize.x, ClSize.y);
-	DeleteObject(SelectObject(secondHdc, bMap));
-
-	SelectObject(secondHdc, GetStockObject(DC_BRUSH));
-	SelectObject(secondHdc, GetStockObject(DC_PEN));
-	SetDCPenColor(secondHdc, RGB(80, 80, 80));
+	SelectObject(secondHdc, GetStockObject(NULL_PEN));
 	
-	ShowWindow(hwnd, SW_SHOWNORMAL);
-	ShowWin();
+	ShowWindow(hWnd, SW_SHOWNORMAL);
+	//ShowWin(hwnd);
 
 	MSG msg;
 	/*while (GetMessage(&msg, NULL, 0 , 0))
@@ -426,7 +380,7 @@ int main()
 			tc = GetTickCount();
 		else if(t > tc)
 		{
-			ActionWin(hwnd, t - tc);
+			ActionWin(t - tc);
 			ShowWin();
 			tc = t; // GetTickCount();
 		}
@@ -434,7 +388,8 @@ int main()
 	}
 
 
-	ReleaseDC(hwnd, hdc);
+	ReleaseDC(hWnd, hdc);
+	ReleaseDC(hWnd, secondHdc);
 
 	return 0;
 }
