@@ -2,8 +2,10 @@
 #include <list>
 #include <format>
 
+#include "..\..\Iincludes\class.h"
+#include "..\..\Iincludes\wincom.h"
+
 #include "..\..\Iincludes\Rect_Point.h"
-#include "..\..\Iincludes\string_ext.h"
 
 template <class T>
 class world {
@@ -95,7 +97,7 @@ public:
 };
 
 HDC secondHdc;
-HWND hWnd, b1,b2;
+HWND hWnd;
 POINT ClSize, pos;
 BOOL pause = true;
 u_char multiple = 10, tecCol = 1;
@@ -245,8 +247,8 @@ void resize() {
 
 	OutputInfo(hWnd);
 
-	SetWindowPos(b1, NULL, ClSize.x - 140, ClSize.y - 30, 0, 0, SWP_NOOWNERZORDER | SWP_NOSIZE);
-	SetWindowPos(b2, NULL, ClSize.x - 140, ClSize.y - 60, 0, 0, SWP_NOOWNERZORDER | SWP_NOSIZE);
+	SetWindowPos(GetDlgItem(hWnd, 101), NULL, ClSize.x - 140, ClSize.y - 30, 0, 0, SWP_NOOWNERZORDER | SWP_NOSIZE);
+	SetWindowPos(GetDlgItem(hWnd, 102), NULL, ClSize.x - 140, ClSize.y - 60, 0, 0, SWP_NOOWNERZORDER | SWP_NOSIZE);
 }
 
 
@@ -429,7 +431,7 @@ int main()
 
 	secondHdc = CreateCompatibleDC(GetDC(hWnd));
 	
-	b1 = CreateWindowW(
+	auto b = CreateWindowW(
 		L"BUTTON",  // Predefined class; Unicode assumed 
 		L"Выход",      // Button text 
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
@@ -441,10 +443,10 @@ int main()
 		(HMENU)101,       // No menu.
 		(HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE),
 		NULL);      // Pointer not needed.
-	if (b1 == nullptr)
-		cout << "B1: " << GetLastError() << endl;
+	if (b == nullptr)
+		cout << "Button 'Выход'" << GetLastError() << endl;
 
-	b2 = CreateWindowW(
+	b = CreateWindowW(
 		L"BUTTON",  // Predefined class; Unicode assumed 
 		L"Заново",      // Button text 
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
@@ -457,14 +459,10 @@ int main()
 		(HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE),
 		NULL); ;
 
-	if (b2 == nullptr)
-		cout << "B2: " << GetLastError() << endl;
-
-
-	auto h = GetWindow(hWnd, 101);
+	if (b == nullptr)
+		cout << "Button 'Заново'" << GetLastError() << endl;
 
 	ShowWindow(hWnd, SW_SHOWNORMAL);
-
 
 	MSG msg;
 	/*while (GetMessage(&msg, NULL, 0 , 0))

@@ -1,5 +1,9 @@
 ﻿// ConsoleApplication2.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
 //
+#define _CRTDBG_MAP_ALLOC 
+#include <crtdbg.h>
+#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#define new DEBUG_NEW
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -7,6 +11,7 @@
 #endif
 
 #include <iostream>
+<<<<<<< Updated upstream
 #include <algorithm>
 
 using namespace std;
@@ -119,6 +124,27 @@ int main()
     go();
    
     _CrtDumpMemoryLeaks();
+=======
+
+#include "..\..\Iincludes\class.h"
+//#include "..\..\Iincludes\wincom.h"
+
+using namespace std;
+
+
+int main()
+{
+	{bufList<int> s;
+	for (auto i = 1; i < 50; i++)
+		s << i;
+
+	s.
+	while()
+}
+
+	_CrtDumpMemoryLeaks();
+	return 0;
+>>>>>>> Stashed changes
 }
 
 // Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"
