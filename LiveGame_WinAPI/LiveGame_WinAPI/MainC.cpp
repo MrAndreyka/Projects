@@ -152,7 +152,7 @@ void ShowWin()
 		LineTo(secondHdc, winSize.x * multiple, yc);
 	}
 
-	InvalidateRect(hWnd, NULL, true);
+	InvalidateRect(hWnd, NULL, false);
 	//UpdateWindow(hWnd);
 	//OnPaint();
 }
@@ -191,7 +191,7 @@ void ShowInfo()
 	s = L"Space: След.итерация";
 	DrawText(secondHdc, s.c_str(), s.length(), &r, DT_SINGLELINE);
 
-	InvalidateRect(hWnd, NULL, true);
+	InvalidateRect(hWnd, NULL, false);
 }
 
 void ActionWin(ULONG cou){
@@ -247,14 +247,16 @@ void resize() {
 
 	OutputInfo(hWnd);
 
+
 	SetWindowPos(GetDlgItem(hWnd, 101), NULL, ClSize.x - 140, ClSize.y - 30, 0, 0, SWP_NOOWNERZORDER | SWP_NOSIZE);
 	SetWindowPos(GetDlgItem(hWnd, 102), NULL, ClSize.x - 140, ClSize.y - 60, 0, 0, SWP_NOOWNERZORDER | SWP_NOSIZE);
 }
 
-
 void OnPaint() {
 	PAINTSTRUCT ps;
 	auto hdc = BeginPaint(hWnd, &ps);
+	ExcludeClipRect(hdc, ClSize.x - 140, ClSize.y - 30, ClSize.x - 10, ClSize.y - 5);
+	ExcludeClipRect(hdc, ClSize.x - 140, ClSize.y - 60, ClSize.x - 10, ClSize.y - 35);
 	BitBlt(hdc, 0, 0, ClSize.x, ClSize.y, secondHdc, 0, 0, SRCCOPY);
 	EndPaint(hWnd, &ps);
 }
@@ -380,7 +382,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 		else if ((wParam & MK_LBUTTON) == MK_LBUTTON) {
 			tmp /= multiple;
 			myg.SetVal(pos.x + tmp.x, pos.y + tmp.y, tecCol, true);
-			ShowWin();
+			if(pause)
+				ShowWin();
 		}/*
 		else if (tmp.x > winSize.x * multiple) {
 			MyRECT r(winSize.x * multiple + 10, ClSize.y - 40, ClSize.x - 10, ClSize.y - 10);
@@ -394,13 +397,16 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 			}
 		}*/
 	}
-	 break;
+		break;
 	case WM_SIZE: {
 		ClSize.x = LOWORD(lParam);
 		ClSize.y = HIWORD(lParam);
 		resize();
 	}
-				break;
+		break;
+	case WM_ERASEBKGND:
+		return 1;
+		break;
 	case WM_PAINT:
 		OnPaint();
 		break;
@@ -431,10 +437,10 @@ int main()
 
 	secondHdc = CreateCompatibleDC(GetDC(hWnd));
 	
-	auto b = CreateWindowW(
+	{auto b = CreateWindowW(
 		L"BUTTON",  // Predefined class; Unicode assumed 
 		L"Выход",      // Button text 
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON | WS_CLIPCHILDREN,  // Styles 
 		10,         // x position 
 		10,         // y position 
 		130,        // Button width
@@ -449,7 +455,7 @@ int main()
 	b = CreateWindowW(
 		L"BUTTON",  // Predefined class; Unicode assumed 
 		L"Заново",      // Button text 
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON | WS_CLIPCHILDREN,  // Styles 
 		10,         // x position 
 		10,         // y position 
 		130,        // Button width
@@ -460,7 +466,7 @@ int main()
 		NULL); ;
 
 	if (b == nullptr)
-		cout << "Button 'Заново'" << GetLastError() << endl;
+		cout << "Button 'Заново'" << GetLastError() << endl; }
 
 	ShowWindow(hWnd, SW_SHOWNORMAL);
 

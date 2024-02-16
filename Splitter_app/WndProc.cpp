@@ -478,14 +478,14 @@ LRESULT CALLBACK RightWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
 			hWnd1 = CreateWindowEx(WS_EX_CLIENTEDGE,
 				"edit", NULL,
-				WS_CHILD | WS_VISIBLE | ES_MULTILINE | WS_VSCROLL| SS_SUNKEN,
+				WS_CHILD | WS_VISIBLE | ES_MULTILINE | WS_VSCROLL| SS_SUNKEN | WS_CLIPCHILDREN,
 				0, 0, 0, 0,
 				hWnd, (HMENU)1,
 				hInst, NULL);
 
 			hWnd2 = CreateWindowEx(WS_EX_CLIENTEDGE,
 				"edit", NULL,
-				WS_CHILD | WS_VISIBLE | ES_MULTILINE | WS_VSCROLL| SS_SUNKEN,
+				WS_CHILD | WS_VISIBLE | ES_MULTILINE | WS_VSCROLL| SS_SUNKEN | WS_CLIPCHILDREN,
 				0, 0, 0, 0,
 				hWnd, (HMENU)2,
 				hInst, NULL);
@@ -523,12 +523,11 @@ LRESULT CALLBACK RightWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 						return 0;
 
 					dwSplitterPos = HIWORD(lParam);
+					auto wlp = MAKELPARAM(rect.right, rect.bottom);
 					SendMessage(hWnd, WM_SIZE, 0, MAKELPARAM(rect.right, rect.bottom));
 				}
 			}
 			return 0;
-
-
 		case WM_LBUTTONDOWN:
 			SetCursor(hCursor);
 			bSplitterMoving = TRUE;

@@ -7,164 +7,13 @@
 #include "myInit.h"
 
 #ifdef _DEBUG
-	//#define _SmartStr_mem
-#endif
-
-#ifdef _SmartStr_mem
-#include <list>
-#include <iostream>
-#include <algorithm>
-
-struct SBufer_mem {
-	static size_t MemListindex;
-	void* LP;
-	bool isFree;
-	size_t Size, nLine, indexIn;
-	SBufer_mem(void* P, size_t S, size_t numLine) {
-		LP = P; Size = S; nLine = numLine;
-		isFree = false; indexIn = MemListindex++;
-	}
-	void Out(const char* prewstr)const 
-	{ std::cout << prewstr << "	Pointer: " << LP << "	indexIn:" << indexIn << "	size: " << Size << "	in line: " << nLine << std::endl; }
-};
-
-size_t SBufer_mem::MemListindex = 0;
-
-std::list<SBufer_mem> Bufer_mems;
-auto find_in_Bufer_mems(void *lp) {
-	auto p = std::find_if(Bufer_mems.begin(), Bufer_mems.end(), [lp](const SBufer_mem& x) -> bool {
-		return x.LP == lp; });
-	auto res = (p==Bufer_mems.end())? false: (p->isFree? false: p->isFree = true);
-	
-	if (!res)
-		if(p == Bufer_mems.end())
-			std::cout << "Release of unallocated " << lp << __LINE__;
-		else
-			p->Out("Re-release");
-	return res;
-}
-
-void report_Bufer_mems() {
-
-	auto p = std::for_each(Bufer_mems.begin(), Bufer_mems.end(), [](const SBufer_mem& x) {
-		if (!x.isFree) x.Out("Is not free"); });
-}
-
-#define Save_toMemList(p) Bufer_mems.push_back(SBufer_mem(p,_msize(p),__LINE__))
-#define Free_inMemList(p)	find_in_Bufer_mems(p)
-#define report_MemList()	report_Bufer_mems()
-#else
-#define Save_toMemList(p)
-#define Free_inMemList(p) true
-#define report_MemList()
+//#define _SmartStr_mem
 #endif
 
 #define __max(a,b)  (((a) > (b)) ? (a) : (b))
 
-template <class T>
-class ForwardList {
-private:
-	template <class T>
-	class Cell {
-		friend ForwardList;
-	private:
-		T value;
-		Cell<T>* next = nullptr;
-	public:
-		Cell() {};
-		Cell(const T& val) :value(val) {};
-		T& operator*() const { return value; };
-		T& at() { return value; }
-	};
-
-	void push_after(const T& val, Cell<T>* elem) {
-		auto t = new Cell<T>(val);
-		t->next = elem->next;
-		elem->next = t;
-	}
-
-	Cell<T>* _begin, * _end;
-public:
-	//using typename ForwardList<T> 
-	template <class T, class To>
-	class iterator {
-		friend ForwardList;
-	private:
-		Cell<T>* pos;
-		iterator(Cell<T>* _pos) : pos(_pos) {}
-	public:
-		iterator() {}
-		iterator(const iterator& val) :pos(val.pos) {}
-
-		bool operator!=(iterator const& other) const { return pos != other.pos; };
-		bool operator==(iterator const& other) const { return pos == other.pos; };
-		To& operator*() const { return pos->at(); };
-		To& operator->() const { return pos->at(); };
-		iterator& operator++() { pos = pos->next; return *this; };
-		bool isEnd() { return pos == nullptr; }
-	};
-
-	ForwardList() { _begin = _end = nullptr; }
-	ForwardList(const T& val) { _begin = _end = new Cell<T>(val); }
-
-	~ForwardList() {
-		if (_begin == nullptr) return;
-		for (Cell<T>* p, *i = p = _begin; i != nullptr; p = i)
-		{
-			i = p->next;
-			delete p;
-		}
-	}
-	iterator<T, T> begin() const { return _begin; }
-	iterator<T, T> end() const { return nullptr; }
-
-	iterator<T, const T> cbegin() const { return _begin; }
-	iterator<T, const T> cend() const { return nullptr; }
-
-	iterator<T, T> before_end() const { return _end; }
-	iterator<T, const T> cbefore_end() const { return _end; }
-
-	void push_back(const T& val) { _end = (_end == nullptr) ? _begin = new Cell<T>(val) : (_end->next = new Cell<T>(val)); }
-	void push_begin(const T& val) {
-		auto t = new Cell<T>(val);
-		t->next = _begin;
-		_begin = t;
-		if (!_end)
-			_end = _begin;
-	}
-
-	void push_after(const T& val, const iterator<T, T>& elem) { push_after(val, elem.pos); }
-
-	ForwardList<T>& operator <<(const T& val) {
-		push_back(val);
-		return *this;
-	}
-	ForwardList<T>& operator >>(const T& val) {
-		push_begin(val);
-		return *this;
-	}
-};
-
 template <class Type>
 class VRTSmartStr;
-
-#define _Info_Buf
-
-#ifdef _Info_Buf
-
-template <class Type>
-class  Info_Buf;
-
-template <class T>
-class bufList:public ForwardList<Info_Buf<T>> {
-	using DataType = typename Info_Buf<T>;
-public:
-
-	bufList(){};
-	bufList(const bufList<T>& val):ForwardList(val){};
-	bufList(const DataType& val) :ForwardList(val) {};
-};
-#endif //_Info_Buf
 
 struct InfoData {
 	long Cou;
@@ -180,25 +29,25 @@ struct InfoData {
 	auto& length() { return Len; }
 };
 
-struct InfoDataB : InfoData {
+struct InfoDataB :public InfoData {
 	size_t LenBuf;
-	void Set(size_t Len_, size_t LBuf_, size_t Cou_){
+	void Set(size_t Len_, size_t LBuf_, size_t Cou_) {
 		InfoData::Set(Len_, Cou_);
 		LenBuf = LBuf_;
 	}
 	auto& length() { return LenBuf; }
 };
 
-template <class Type, class Parent>
-struct Bufer : Parent {
-	using CurrentType = typename Bufer<Type, Parent>;
+template <class Type>
+struct Bufer : InfoDataB {
+	using CurrentType = typename Bufer<Type>;
 	Type Data[1];
 
 	//Создает новый буфер и если нужно копирует в него данные
 	// Size - РазмерБуфера; Len - Длинна; dest - Источник данных; destLen - Длинна копируемых данных
 	static Bufer* Create(size_t Size, const Type* dest = nullptr, size_t destLen = 0) {
 		_ASSERTE(Size != 0);
-		CurrentType* P = (CurrentType*) new char[Size*sizeof(Type) + sizeof(Parent)];
+		CurrentType* P = (CurrentType*) new char[Size * sizeof(Type) + sizeof(InfoDataB)];
 		if (!dest)
 			destLen = 0;
 		else {
@@ -210,11 +59,11 @@ struct Bufer : Parent {
 		return P;
 	}
 
-	void Destroy() {
-		_ASSERT(Free_inMemList(this));
-		delete []this;
-	};
+	void Destroy() { delete[]this; };
+	void Relese() { if (!DecCou())	delete[]this; };
 
+	Type* end() { return Data + Len; }
+	
 	//Копирует в готовый буфер данные
 	// BUF - Данные; len - Размер данных; Beg - Начало вставки
 	// никакой проверки данных нет
@@ -259,11 +108,11 @@ public:
 	};
 };
 
-/*template <class Type>
+template <class Type>
 class List  {
 	BuferList<Type>* Info = nullptr;
 	Cell<Type> *CurCell;
-	size_t Cur;	
+	size_t Cur;
 
 	Cell<Type>* GetCell(size_t Pos) {
 		Cell<Type>* C;
@@ -288,10 +137,10 @@ public:
 		CurCell = nullptr;
 		Cur = 0;
 	}
-	List(const List<Type>& Val) { 
+	List(const List<Type>& Val) {
 		operator =(Val);
 	}
-	
+
 	List<Type>& operator =(const List<Type>& Val) {
 		Clear();
 		if (!Val.Info) {
@@ -379,7 +228,7 @@ public:
 	size_t Length()const{ return Info? Info->Len: 0; }
 
 	void ToStart() { Cur = 0; CurCell = Info ? Info->Beg: nullptr; }
-	Type Curent()const { return CurCell->Data; };	
+	Type Curent()const { return CurCell->Data; };
 	size_t CurentPos()const { return Cur; }
 	size_t CurentPos(size_t Pos){
 		if (!Info) return 0;
@@ -387,104 +236,55 @@ public:
 		CurCell = GetCell(Pos);
 		Cur = Pos;
 		return Cur;}
-};
-*/
+};*/
+
 
 ///////////////////////////////////////////////////////
 
-static size_t StringLength(_In_opt_z_ const LPCSTR psz, size_t Size = 0) throw() {
+size_t StringLength(_In_opt_z_ const LPCSTR psz, size_t Size = 0) throw() {
 	if (psz == nullptr) return 0;
 	return Size ? strnlen(psz, Size) : strlen(psz);
 }
 
-static size_t StringLength(_In_opt_z_ const LPCWSTR psz, size_t Size = 0) throw() {
+size_t StringLength(_In_opt_z_ const LPCWSTR psz, size_t Size = 0) throw() {
 	if (psz == nullptr) return 0;
 	return Size ? wcsnlen(psz, Size) : wcslen(psz);
+}
+
+size_t NumberToStr(const INT64 val, byte sys, LPSTR Buf, size_t LenBuf) {
+	_ASSERTE(sys >= 2 && sys <= 36);
+	_i64toa_s(val, Buf, LenBuf, sys);
+	return StringLength(Buf);
+}
+
+size_t NumberToStr(const INT64 val, int sys, LPWSTR Buf, size_t lenBuf) {
+	_ASSERTE(sys >= 2 && sys <= 36);
+	_i64tow_s(val, Buf, lenBuf, sys);
+	return StringLength(Buf);
+}
+
+size_t NumberToStr(const double val, byte sys, LPSTR Buf, size_t LenBuf) {
+	_ASSERTE(sys >= 0);
+	_gcvt_s(Buf, LenBuf, val, sys);
+	return StringLength(Buf);
+}
+
+size_t NumberToStr(const double val, int sys, LPWSTR Buf, size_t lenBuf) {
+	_ASSERTE(sys >= 0);
+	_gcvt_s((char*)Buf, lenBuf, val, sys);
+	size_t Tm = StringLength((char*)Buf), a = Tm + 1;
+	while (a) Buf[a] = ((char*)Buf)[--a];
+	return Tm;
 }
 
 template< typename BaseType>
 class TransformationType;
 
 template <class Type>
-class BufPointer:InfoData {
-	using cl = TransformationType<Type>;
+class VRTSmartStr;
 
-	using Base_Char = typename cl::Base_Char;
-	using Base_Str = typename cl::Base_Str;
-	using Base_CStr = typename cl::Base_CStr;
-
-	using F_Char = typename cl::F_Char;
-	using F_Str = typename cl::F_Str;
-	using F_CStr = typename cl::F_CStr;
-	
-	using MyBufer = typename Bufer<Type, InfoData>;
-public:
-	Base_CStr Data;
-
-	~BufPointer() {
-		/*if (!Cou) return;
-		if (!InterlockedDecrementAcquire(Cou))
-			((MyBufer*)SHIFT(Data, -1, InfoDataB))->Destroy();*/
-	}
-
-	BufPointer(const BufPointer &Val) : Data(nullptr) {
-		this->operator=(Val);
-	}
-
-	BufPointer(const VRTSmartStr<Type>& Val) : {
-		Data = SHIFT(Val, sizeof(InfoData) - sizeof(InfoDataB), char);
-		if (Len)
-			InterlockedIncrementAcquire(SHIFT(Data, -1, InfoData));
-	}
-
-	BufPointer(Base_CStr Val, const size_t Len = 0) : Data(Val) {
-		this->Len = Len ? Len : StringLength(Val);
-	}
-
-	BufPointer(F_CStr Val, size_t Size = 0) : Data(nullptr) {
-		size_t Sz = cl::BaseTypeLen(Val, Size);
-		MyBufer*I = MyBufer::Create(Sz + 1);
-		Data = re_cast(Type*, I->Data);
-		Len = I->Len - 1;
-		cl::ToBaseType(*this, Val, Size);
-	}
-
-	BufPointer(const INT64 Val, byte sys = 10) : Data(nullptr) {
-		MyBufer*I = MyBufer::Create(sys == 10 ? 21 : _CVTBUFSIZE);
-		Cou = &I->Cou;
-		Data = I->Data;
-		Len = I->Len - 1;
-		cl::NumberToStr(Val, sys, *this);
-		Len = StringLength(Data);
-		I->Len = Len;
-	}
-
-	explicit BufPointer(const double Val, byte dig = 10) : Data(nullptr) {
-		MyBufer*I = MyBufer::Create(dig + 31);
-		Cou = &I->Cou;
-		Data = I->Data;
-		Len = I->Len / 2;
-		cl::NumberToStr(Val, dig, *(BufPointer<char>*)this);
-		I->Len = Len = StringLength((char*)Data);
-		I->Data[Len] = 0;
-		size_t Tm = Len;
-		while (Tm) 	I->Data[Tm] = ((char*)Data)[--Tm];
-	}
-
-	BufPointer& operator =(const BufPointer &Val) {
-		if (Val.Cou) InterlockedIncrementAcquire(Val.Cou);
-		memcpy(this, &Val, sizeof(*this));
-		return *this;
-	}
-};
-
-#ifdef _Info_Buf
-template <class Type>
-class  Info_Buf {
-private:
-	void* Data;
-	size_t Len; byte type;
-public:
+template< typename Type>
+class BufPointer{
 	using tt = TransformationType<Type>;
 
 	using Base_Char = typename tt::Base_Char;
@@ -495,126 +295,93 @@ public:
 	using F_Str = typename tt::F_Str;
 	using F_CStr = typename tt::F_CStr;
 
-	~Info_Buf() {
-		if (!Data || type < 3) return;
-		if (type == 5) {
-			((VRTSmartStr<Type>*)Data)->Clear();
-			delete [](Data);
+	using MyBufer = typename Bufer<Type>;
+private:
+	char Buf[9];
+	void SavePointer(void* bf) { *(INT64*)Buf = (INT64)bf; }
+	template< typename T>
+	void SaveData(const T val) {
+		_ASSERT(sizeof(val) <= 8);
+		new (Buf) T(val);
+	}
+	//	*(T*)Buf = val;	}
+public:
+	size_t Len;
+	const byte type;
+
+	bool ActualSize()const { return type < 2; }
+
+	size_t SaveTo(Base_Str _Buf, size_t bufLength, bool exact = false)const {
+
+		switch (type){
+		case 0:case 10:
+			CopyMemory(_Buf, *(Base_Str*)Buf, bufLength*sizeof(Type));
+			return Len;
+			break;
+		case 1:
+			return tt::ToBaseType(_Buf, bufLength, *(F_Str*)Buf, Len, Buf[8]);
+			break;
+		case 2:
+			return NumberToStr(*(INT64*)Buf, Buf[8], _Buf, bufLength);
+			break;
+		case 3:
+			return NumberToStr(*(double*)Buf, Buf[8], _Buf, bufLength);
+			break;
+		default:
+			throw "Error type in BufPointer";
+			break;
 		}
-		else if (!InterlockedDecrementAcquire((LONG*)Data))
-			delete[](Data);
+		return 0;
 	}
 
-	Info_Buf() :Data(nullptr) {};
-
-	Info_Buf(const Info_Buf &Val):Data(nullptr) {
-		this->operator=(Val);
+	~BufPointer() {
+		if (type == 10)
+			((Bufer<Base_Char>*)SHIFT(*(Base_Str*)Buf, -1, InfoDataB))->Relese();
+		else if (type == 11)
+			delete[]Buf;
 	}
 
-	Info_Buf(Base_CStr Val, const size_t Size = 0) {
-		Len = Size ? Size : StringLength(Val);
-		Data = const_cast<Base_Str>(Val);
-		type = 1;
+	BufPointer(BufPointer&& Val) : Buf(Val.Buf), Len(Val.Len), type(Val.type) {
+		Val.Len = 0; }
+
+	BufPointer(const VRTSmartStr<Type>& Val):Len(Val.Length()), type(10) {
+		auto *I = Val.GetInfo();
+		SavePointer((I && I->IncCou()>1)? I->Data: nullptr);
 	}
 
-	Info_Buf(F_CStr Val, size_t Size = 0) {
-		Len = tt::BaseTypeLen(Val, Size);
-		Data = const_cast<F_Str>(Val);
-		type = 2;
+	BufPointer(Base_CStr Val, const size_t Len = 0):type(0){
+		this->Len = Len ? Len : StringLength(Val);
+		SavePointer((void*)Val);
 	}
 
-	Info_Buf(INT64 Val, byte sys = 10) {
-		From(Val, sys);
+	BufPointer(F_CStr Val, size_t Len = 0) : type(1) {
+		this->Len = Len ? Len : StringLength(Val);
+		SavePointer((void*)Val);
 	}
 
-	Info_Buf(const int Val, byte sys = 10) {
-		From((INT64)Val, sys);
-	}
-	/*
-	Info_Buf(const DWORD Val, byte sys = 10) {
-		*this = Info_Buf((INT64)Val, sys);
+	BufPointer(const INT64 Val, byte sys = 10) : type(2) {
+		Len = sys == 10 ? 21 : _CVTBUFSIZE;
+		SaveData(Val);
+		Buf[8] = sys;
 	}
 
-	Info_Buf(const size_t Val, byte sys = 10) {
-		*this = Info_Buf((INT64)Val, sys);
-	}*/
-
-	Info_Buf(const double Val, byte dig = 10) {
+	explicit BufPointer(const double Val, byte dig = 10) :type(3) {
 		Len = dig + 31;
-		CreateData(sizeof(Val)+ sizeof(dig));
-		*(double*)SHIFT(Data, 1, LONG) = Val;
-		*(byte*)SHIFT(SHIFT(Data, 1, LONG), 1, double) = dig;
-		type = 4;
+		SaveData(Val);
+		Buf[8] = dig;
 	}
 
-	Info_Buf(const VRTSmartStr<Type>& Val) {
-		Len = Val.Length();
-		if (Len) {
-			Data = new char[sizeof(Val)];
-			ZeroMemory(Data, sizeof(Val));
-			*(VRTSmartStr<Type>*)Data = Val;
-		}
-		type = 5;
-	}
-
-	Info_Buf& operator = (const Info_Buf &Val) {
-		if (Data) this->~Info_Buf();
-		if (Val.Data) InterlockedIncrementAcquire((LONG*)Val.Data);
-		memcpy(this, &Val, sizeof(*this));
+	BufPointer& operator =(BufPointer&& Val) {
+		memmove(this, &Val, sizeof(*this));
+		Val.Len = 0;
 		return *this;
 	}
-private:
-
-	friend VRTSmartStr<Type>;
-	void CreateData(byte size) {
-		Data = new char[sizeof(LONG) + size];
-		*(LONG*)(Data) = 1;
-	};
-
-	void From(INT64 Val, byte sys = 10) {
-		CreateData(sizeof(INT64) + sizeof(byte));
-		*(INT64*)SHIFT(Data, 1, LONG) = Val;
-		*(byte*)SHIFT(SHIFT(Data, 1, LONG), 1, INT64) = sys;
-		Len = 1;
-		while (Val /= 10) Len++;
-		type = 3;
-	}
-
-	size_t SaveToBuf(Base_Str Buf) const {
-		if (!Data) return 0;
-		switch (type) {
-		case 1: {
-			memcpy(Buf, Data, (Len)*sizeof(Type));
-			return Len;
-		}break;
-		case 2: {
-			auto r = BufPointer<Base_Char>(Buf, Len);
-			tt::ToBaseType(r, (F_Char*)Data, Len);
-			return Len;
-		}break;
-		case 3: {
-			auto r = BufPointer<Base_Char>(Buf, Len);
-			tt::NumberToStr(*(INT64*)SHIFT(Data, 1, LONG), *(byte*)SHIFT(SHIFT(Data, 1, LONG), 1, INT64), r);
-			return Len;
-		}break;
-		case 4: {
-			auto r = BufPointer<Base_Char>(Buf, Len);
-			return tt::NumberToStr(*(double*)SHIFT(Data, 1, LONG), *(byte*)SHIFT(SHIFT(Data, 1, LONG), 1, double), r); 
-		}break;
-		case 5: {
-			memcpy(Buf, *(Type**)Data, (Len)*sizeof(Type));
-			return Len;
-		}break;
-		};
-		return 0;
-	};
 };
-#endif //_Info_Buf
-
 
 template <class Type>
 class VRTSmartStr {
-public: 
+	friend BufPointer<Type>;
+public:
 	using tt = TransformationType<Type>;
 	using Base_Char = typename tt::Base_Char;
 	using Base_Str = typename tt::Base_Str;
@@ -622,7 +389,7 @@ public:
 	using F_Char = typename tt::F_Char;
 	using F_Str = typename tt::F_Str;
 private:
-	using Info = Bufer<Type, InfoDataB>;
+	using Info = Bufer<Type>;
 	using TSmartString = VRTSmartStr<Type>;
 
 	Base_Str Buf = nullptr;
@@ -635,25 +402,24 @@ private:
 		Buf = P->Data;
 	}
 
-	static size_t NB_Size(size_t Size, Info* Old){
-		size_t NewSize;
+	static size_t NB_Size(size_t Size, Info* Old) {
 		Size++;
-		if (!Old || Old->LenBuf > Size) 
+		if (!Old || Old->LenBuf > Size)
 			return Size;
-		NewSize = Old->LenBuf + (Old->LenBuf * sizeof(Base_Str) > 2097152 ? 104857 : Old->LenBuf / 2); //2097152 - 2мб 104857 - 100кб
+		size_t NewSize = Old->LenBuf + (Old->LenBuf * sizeof(Base_Char) > 2097152 ? 104857 : Old->LenBuf / 2); //2097152 - 2мб 104857 - 100кб
 		if (NewSize < Size) NewSize = Size;
 		return NewSize;
 	}
 
-	// Пересоздает буфер нового размера без копирования
+	// Пересоздает буфер нового размера
 	Info* NewBuf(const size_t requisiteSize, bool copy = false) {
 		_ASSERT(requisiteSize + 1 > 1);
-		Info *I = GetInfo();
+		Info* I = GetInfo();
 
 		if (!I || I->Cou > 1 || I->LenBuf < requisiteSize + 1) {
 			size_t NewSize = NB_Size(requisiteSize, I);
 			//if (I && FirstClear) Clear();
-			I = (copy && I) ? Info::Create(NewSize, I->Data, I->Len): Info::Create(NewSize);
+			I = (copy && I) ? Info::Create(NewSize, I->Data, I->Len) : Info::Create(NewSize);
 		}
 		I->Data[I->Len] = 0;
 		return I;
@@ -694,7 +460,7 @@ private:
 		_ASSERTE(Count + Pos >= Pos); // переполнение типа size_t
 		if (Count + Pos > LEN) Count = LEN - Pos;
 		_ASSERTE(LEN + Size > LEN && LEN + Size > Size); // переполнение типа size_t
-		Info *P = DeBuf(Size + LEN - Count);
+		Info* P = NewBuf(Size + LEN - Count);
 		if (Pos && P->Data != Buf) P->FillBuf(Buf, Pos);
 		if (Count != Size && Pos + Count < LEN)
 			P->FillBuf(Buf + Pos + Count, LEN - Pos - Count, Size + Pos);
@@ -711,26 +477,28 @@ private:
 
 		if (!Finds) return Length() - (Home - Buf);
 
-		size_t P = RemChars(Finds + 1, Val);		
-		Info *I = GetInfo();
-		I->FillBuf(Finds +1, P, Finds-Buf);
+		size_t P = RemChars(Finds + 1, Val);
+		Info* I = GetInfo();
+		I->FillBuf(Finds + 1, P, Finds - Buf);
 		I->Len--;
-		return Finds - Home + P ;
+		return Finds - Home + P;
 	};
 
-	size_t IncludeBuf(Base_CStr Val)const {
-		return (!Buf || !Val || Val<Buf || Val > Buf + GetInfo()->LenBuf) ? 0 : Val - Buf +1;
+	//Возвращает с какой позиции Val входит в текущий буфер
+	inline size_t IncludeBuf(Base_CStr Val)const {
+		return (!Buf || !Val || Val<Buf || Val > Buf + GetInfo()->LenBuf) ? 0 : Val - Buf + 1;
 	}
 
 	// Устанавливает размер буфера не менее Size, 
 	//копирует при указании данные с Val размером Len или до конца строки начиная с Beg
 	void SetValue(size_t Size, Base_CStr Val, size_t Len, const size_t Beg = 0) {
-		Info *I = NewBuf(Size, !IncludeBuf(Val));
+		Info* I = NewBuf(Size, !IncludeBuf(Val));
 		if (Val && Len) {
 			if (Len + Beg > Size) Len = Size - Beg;
 			I->FillBuf(Val, Len, Beg);
 			I->Len = Len + Beg;
-		} else I->Len = 0;
+		}
+		else I->Len = 0;
 		I->Data[I->Len] = 0;
 		SetBuf(I);
 	}
@@ -741,17 +509,9 @@ public:
 
 	VRTSmartStr() {};
 
-	VRTSmartStr(const TSmartString &Val) {
-		this->operator=(Val);
-	};
+	VRTSmartStr(const TSmartString& Val) {this->operator=(Val);};
 
-	VRTSmartStr(const BufPointer<Type>& Val) {
-		if (!Val.Cou) *this = VRTSmartStr(Val.Data, Val.Len);
-		else {
-			Buf = const_cast<Base_Str>(Val.Data);
-			GetInfo()->IncCou();
-		}	
-	};
+	VRTSmartStr(TSmartString&& Val) {this->operator=(Val);};
 
 	VRTSmartStr(Base_CStr Val, size_t Size = 0) {
 		if (!Size) Size = StringLength(Val);
@@ -760,148 +520,187 @@ public:
 
 	VRTSmartStr(const F_Str Val, size_t Size = 0) {
 		size_t Len = tt::BaseTypeLen(Val, Size);
-		Info *I = DeBuf(Len);
+		Info* I = DeBuf(Len);
 		tt::ToBaseType(Info(I->Data, I->Len), Val, Size);
 		I->Data[I->Len] = 0;
 		SetBuf(I);
 	};
 
-	VRTSmartStr(const INT64 Val, byte sys = 10) {
-		BufPointer<Type> r(Val, sys);
-		*this = r;
-	};
 
-	/*explicit VRTSmartStr(const double Val, byte sys = 10) {
-		BufPointer<Type> r(Val, sys);
-		*this = r;
-	};*/
-
-	Base_Str GetBuffer(size_t NewSize = 0) {
-		if (NewSize) {
-			auto I = NewBuf(NewSize);
-			SetBuf(I);
-			return I->Data;
-		}
-		_ASSERT(Length());
-		return Buf;
-	};
-
-	Base_Str ReleaseBuffer(size_t NewSize = 0) {
-		_ASSERTE(NewSize < GetInfo()->LBuf);
-		lengthDetermine(NewSize);
-		return Buf;
-	};
-
-	TSmartString& operator = (const TSmartString& Val) {
-		if (this->Buf != Val.Buf) 
-			if (Val.Length()) {
-				Val.GetInfo()->IncCou();
-				Clear();
-				Buf = Val.Buf;
-			} else Clear();
+	TSmartString& operator = (TSmartString&& Val) {
+		if (this->Buf != Val.Buf)
+			return *this;
+		SetBuf(Val.GetInfo());
+		Val.Buf = nullptr;
 		return *this;
 	};
-		
+
 	TSmartString& operator = (Base_CStr Val) {
 		size_t Size = StringLength(Val);
 		SetValue(Size, Val, Size);
 		return *this;
 	};
 
-	TSmartString& operator = (F_Str Val) {
+	TSmartString& operator = (const F_Str Val) {
 		size_t Len = tt::BaseTypeLen(Val, 0);
 		Info* I = DeBuf(Len, true);
-		tt::ToBaseType(BufPointer<Type>(I->Data, I->Len), Val, 0);
+		tt::ToBaseType(I->Data, I->Len, Val, 0);
 		I->Data[I->Len] = 0;
 		SetBuf(I);
 		return *this;
 	};
 
-#ifdef _Info_Buf
-	TSmartString& operator = (Info_Buf<Type> Val) {
+	VRTSmartStr(const INT64 Val, byte sys = 10) {
+		Info* I = NewBuf(sys == 10 ? 21 : _CVTBUFSIZE);
+		I->Len = NumberToStr(Val, sys, I->Data, I->LenBuf - 1);
+		I->end()[0] = 0;
+		SetBuf(I);
+	}
+	explicit VRTSmartStr(const int Val, byte sys = 10) : VRTSmartStr((INT64)Val, sys) {}
+
+	explicit VRTSmartStr(const double Val, byte dig = 25) {
+		Info* I = NewBuf(dig + 31);
+		I->Len = NumberToStr(Val, dig, I->Data, I->LenBuf - 1);
+		*I->end() = 0;
+		Buf = I->Data;
+	}
+
+	TSmartString& operator = (const TSmartString& Val) {
+		if (this->Buf != Val.Buf)
+			if (Val.Length() && Val.GetInfo()->IncCou() > 1) {
+				SetBuf(Val.GetInfo());
+			}
+			else Clear();
+		return *this;
+	};
+
+	/*TSmartString& operator >> (const TSmartString& Val) {
+		Info* I2 = Val.GetInfo();
+		if (!I2 || I2->IncCou() < 2) return *this;
+		Info* I = NewBuf(Length() + I2->Len);
+		if (I->Len = Length())
+			I->FillBuf(Buf, I->Len, I2->Len);
+		I->FillBuf(Val.Buf, I2->Len);
+		I->Len += I2->Len;
+		I->Data[I->Len] = 0;
+		I2->Relese();
+		SetBuf(I);
+		return *this;
+	};*/
+
+	TSmartString& operator >> (const BufPointer<Type>& Val) {
 		if (!Val.Len) return *this;
-		auto I = NewBuf(Val.Len, true);
-		I->Len = Val.SaveToBuf(I->Data);
+		Info* I = NewBuf(Length() + Val.Len);
+		
+		if (!Val.ActualSize() && IncludeBuf(I->Data)) 
+		{
+			auto b = new Base_Char[Val.Len];
+			Val.SaveTo(b, Val.Len);
+			auto sz = StringLength(b);
+
+			if (I->Len = Length())
+				I->FillBuf(Buf, I->Len, sz);
+			I->FillBuf(b, sz);
+			I->Len += sz;
+			delete[]b;
+		}
+		else
+		{
+			if (I->Len = Length())
+				I->FillBuf(Buf, I->Len, Val.Len);
+			I->Len += Val.SaveTo(I->Data, Val.Len);
+		}
 		I->Data[I->Len] = 0;
 		SetBuf(I);
 		return *this;
 	};
 
+	/*TSmartString& operator << (const TSmartString Val) {
+		if (!Val.Length()) return *this;
+		Info* I2 = Val.GetInfo();
+		Info* I = NewBuf(Length() + I2->Len, true);
+		I->FillBuf(I2->Data, I2->Len, I->Len);
+		I->Len += I2->Len;
+		I->Data[I->Len] = 0;
+		SetBuf(I);
+		return *this;
+	};*/
 
-	TSmartString& operator += (const bufList<Base_Char>& Val) {
-		size_t len = 0; 
-		for (auto& a : Val)	len += a.Len;
-		if (len) {
-			auto ol = Length();
-			auto I = NewBuf(len + ol, true);
-			for (auto& a : Val)
-				ol += a.SaveToBuf(I->Data + ol);
-			I->Len = ol;
-			I->Data[I->Len] = 0;
-			SetBuf(I);
-		}
+	TSmartString& operator << (const BufPointer<Type>& Val) {
+		if (!Val.Len) return *this;
+		Info* I = NewBuf(Length() + Val.Len, true);
+		I->Len += Val.SaveTo(I->end(), I->LenBuf - I->Len - 1);
+		I->Data[I->Len] = 0;
+		SetBuf(I);
 		return *this;
 	};
+	/*
+	TSmartString& operator << (const int Val) { return this->operator<<(BufPointer<Type>(Val));}
 
-	TSmartString& operator += (const Info_Buf<Type>& Val) {
-		if (Val.Len) {
-			auto ol = Length();
-			auto I = NewBuf(Val.Len + ol, true);
-			I->Len = ol + Val.SaveToBuf(I->Data + ol);
-			I->Data[I->Len] = 0;
-			SetBuf(I);
-		}
-		return *this;
+	TSmartString& operator << (const double Val) {return this->operator<<(BufPointer<Type>(Val));}
+
+	bool operator < (const BufPointer<Type>& Val) {
+		return this->Compare(Val) < 0;
 	};
 
-	TSmartString& operator << (const Info_Buf<Type>& Val) {
-		return this->operator+=(Val);
+	bool operator > (const BufPointer<Type>& Val) {
+		return this->Compare(Val) > 0;
 	};
 
-	TSmartString& operator >> (const Info_Buf<Type>& Val) {
-		if (Val.Len) {
-			auto ol = Length();
-			SetValue(Val.Len + ol, Buf, ol, Val.Len);
-			auto C = Buf[Val.Len];
-			auto L = Val.SaveToBuf(Buf);
-			if (Val.Len != L) GetInfo()->FillBuf(Buf + Val.Len, Length() - Val.Len + 1, L);
-			Buf[L] = C;
-		}
-		return *this;
-	};
-#endif //_Info_Buf
+	inline friend bool operator == (const TSmartString& Val1, const BufPointer<Type>& Val2) throw() {
+		return Val1.Compare(Val2) == 0;
+	};*/
 
-	TSmartString& operator += (F_Str Val) {
-		size_t Len = tt::BaseTypeLen(Val, 0);
-		Length(Len + Length(), true);
+	TSmartString& operator += (const TSmartString& Val) {
+		if (!Val.Length()) return *this;
+
 		Info* I = GetInfo();
-		tt::ToBaseType(BufPointer<Type> (Buf + I->Len, Len), Val, 0);
-		I->Len += Len;
+
+		if (!I || I->Len == 0) {
+			I = Val.GetInfo();
+			I->IncCou();
+		}
+		else {
+			I = NewBuf(I.Len + Val.Length(), true);
+			I->FillBuf(I->Data + I.Len, Val.Length());
+		}
+		SetBuf(I);
 		return *this;
 	};
 
-	static friend TSmartString operator + (const TSmartString& Val1, const BufPointer<Type>& Val2) {
-		if (!Val1.Length()) return TSmartString(Val2);
-		if (!Val2.Data) return Val1;
-		Info* buf = Info::Create(Val2.Len + Val1.Length() + 1, Val1.Buf, Val1.Length());
-		buf->FillBuf(Val2.Data, Val2.Len, Val1.Length());
-		buf->Data[--buf->Len] = 0;
-		TSmartString _tmp;
-		_tmp.Buf = buf->Data;
-		return _tmp;
-	};
-	
-	friend TSmartString operator + (const BufPointer<Type>& Val1, const TSmartString& Val2) {
-		if (!Val1.Len) return Val2;
-		if (!Val2.Data) return Val1;
-		Info* buf = Info::Create(Val2.Length() + Val1.Len + 1, Val1.Data, Val1.Len);
-		buf->FillBuf(Val2.Buf, Val2.Length(), Val1.Len);
-		buf->Data[--buf->Len] = 0;
-		TSmartString _tmp;
-		_tmp.Buf = buf->Data;
-		return _tmp;
-	};
 
+	/*
+		TSmartString& operator += (F_Str Val) {
+			size_t Len = tt::BaseTypeLen(Val, 0);
+			Length(Len + Length(), true);
+			Info* I = GetInfo();
+			tt::ToBaseType(BufPointer<Type> (Buf + I->Len, Len), Val, 0);
+			I->Len += Len;
+			return *this;
+		};
+
+		static friend TSmartString operator + (const TSmartString& Val1, const BufPointer<Type>& Val2) {
+			if (!Val1.Length()) return TSmartString(Val2);
+			if (!Val2.Data) return Val1;
+			Info* buf = Info::Create(Val2.Len + Val1.Length() + 1, Val1.Buf, Val1.Length());
+			buf->FillBuf(Val2.Data, Val2.Len, Val1.Length());
+			buf->Data[--buf->Len] = 0;
+			TSmartString _tmp;
+			_tmp.Buf = buf->Data;
+			return _tmp;
+		};
+
+		friend TSmartString operator + (const BufPointer<Type>& Val1, const TSmartString& Val2) {
+			if (!Val1.Len) return Val2;
+			if (!Val2.Data) return Val1;
+			Info* buf = Info::Create(Val2.Length() + Val1.Len + 1, Val1.Data, Val1.Len);
+			buf->FillBuf(Val2.Buf, Val2.Length(), Val1.Len);
+			buf->Data[--buf->Len] = 0;
+			TSmartString _tmp;
+			_tmp.Buf = buf->Data;
+			return _tmp;
+		};
+	*/
 	friend TSmartString operator + (const TSmartString& Val1, const TSmartString& Val2) {
 		if (!Val1.Length()) return Val2;
 		if (!Val2.Length()) return Val1;
@@ -913,7 +712,7 @@ public:
 		return _tmp;
 	};
 
-	inline friend TSmartString operator + (const TSmartString& Val1, const Base_Str Val2) {
+	friend TSmartString operator + (const TSmartString& Val1, const Base_Str Val2) {
 		if (!Val1.Length()) return TSmartString(Val2);
 		if (!Val2) return Val1;
 		size_t Sz = StringLength(Val2);
@@ -937,22 +736,14 @@ public:
 		return _tmp;
 	};
 
-	bool operator < (const BufPointer<Type>& Val) {
-		return this->Compare(Val) <0;
-	};
-
-	bool operator > (const BufPointer<Type>& Val) {
-		return this->Compare(Val) > 0;
+	bool operator < (const TSmartString& Val) {
+		return this->Compare(Val) < 0;
 	};
 
 	inline friend bool operator == (const TSmartString& Val1, const TSmartString& Val2) throw() {
 		return Val1.Compare(Val2) == 0;
-	};	
-
-	inline friend bool operator == (const TSmartString& Val1, const BufPointer<Type>& Val2) throw() {
-		return Val1.Compare(Val2) == 0;
 	};
-	
+
 	friend bool operator==(
 		const TSmartString& str1,
 		Base_CStr psz2
@@ -961,7 +752,7 @@ public:
 	};
 
 	inline friend bool operator != (const TSmartString& Val1, const TSmartString& Val2) throw() {
-		return Val1.Compare (Val2) !=0;
+		return Val1.Compare(Val2) != 0;
 	};
 
 	friend bool operator!=(
@@ -976,7 +767,7 @@ public:
 		Bufer<Type> *I = NewBuf(sys == 10 ? 21 : _CVTBUFSIZE);
 		tt::NumberToStr(Val, sys, BufPointer<Type>(I->Data, I->LBuf-1));
 		I->Len = StringLength(I->Data, I->Len);
-		SetBuf(I);		
+		SetBuf(I);
 		return *this;
 	}
 
@@ -988,12 +779,28 @@ public:
 		return *this;
 	}*/
 
+	Base_Str GetBuffer(size_t NewSize = 0) {
+		if (NewSize) {
+			auto I = NewBuf(NewSize);
+			SetBuf(I);
+			return I->Data;
+		}
+		_ASSERT(Length());
+		return Buf;
+	};
+
+	Base_Str ReleaseBuffer(size_t NewSize = 0) {
+		_ASSERTE(NewSize < GetInfo()->LenBuf);
+		lengthDetermine(NewSize);
+		return Buf;
+	};
+
 	//Сложение в строку нескольких источников, FullSize = общий размер, параметры: размер и указатель на начало строки извлекается пока не дойдет до FullSize
 	//	возвращает общую длинну строки
 	size_t Concatenation(size_t FullSize, ...) { return Concatenation((va_list)&FullSize); }
 
 	size_t Concatenation(va_list Par) {
-		size_t tmp, Zp(0), FullSize = va_arg(Par, size_t);	
+		size_t tmp, Zp(0), FullSize = va_arg(Par, size_t);
 
 		if (!FullSize) return Length(0);
 		Info* I = NewBuf(FullSize, true);
@@ -1010,21 +817,21 @@ public:
 		return Zp;
 	}
 
-	inline bool isEmpty() { return !Length();}
+	inline bool isEmpty() { return !Length(); }
 
 	//Возвращает размер буфера памяти учитывая символ конца строки
 	inline size_t BufLength()const { return Buf ? GetInfo()->LBuf : 0; };
 
 	//Возвращает длину строки, без символа конца строки
 	inline size_t Length()const { return Buf ? GetInfo()->Len : 0; };
-	
+
 	//Рассчитывает актуальную длину строки не более maxCou символов вмещаемую в буфер, при необходимости добавляет символ конца строки
 	size_t lengthDetermine(size_t maxCou = 0)const {
 		if (!Buf) return 0;
-		maxCou = maxCou ? min(maxCou, GetInfo()->LBuf-1) : GetInfo()->LBuf;
+		maxCou = maxCou ? min(maxCou, GetInfo()->LenBuf - 1) : GetInfo()->LenBuf;
 		size_t SZ = StringLength(Buf, maxCou);
-		if (GetInfo()->LBuf < SZ + 1) {
-			SZ = GetInfo()->LBuf - 1;
+		if (GetInfo()->LenBuf < SZ + 1) {
+			SZ = GetInfo()->LenBuf - 1;
 			Buf[SZ] = 0;
 		}
 		return GetInfo()->Len = SZ;
@@ -1034,22 +841,23 @@ public:
 	//(Size - Размер (не учитывая символа конца строки), Copy - Копировать ли содержимое, Resizible - Уменьшать ли размер буфера)
 	size_t Length(size_t Size, bool Copy = false, bool Resizible = false) {
 		_ASSERTE(Size != -1);
-		Info *I = GetInfo();
-		
+		Info* I = GetInfo();
+
 		if (!Size) {
 			if (Resizible) Clear();
 			elseif(I) I->Data[0] = 0;
 			return 0;
 		}
 
-		if (!I || I->Cou > 1 || I->LBuf < Size + 1 || Resizible) {
+		if (!I || I->Cou > 1 || I->LenBuf < Size + 1 || Resizible) {
 			I = NewBuf(Size + 1, Copy);
 			//!!!!!!!!!!!
 			/*if (Copy) {
 				I->Len = min(Length(), Size);
 				if (Buf != I->Data && I->Len) I->FillBuf(Buf, I->Len, 0);
 			} else I->Len = 0;*/
-		} else if (Size < I->Len) I->Len = Size;
+		}
+		else if (Size < I->Len) I->Len = Size;
 
 		I->Data[I->Len] = 0;
 		SetBuf(I);
@@ -1059,8 +867,8 @@ public:
 	//Очищает строку, уничтожает буфер
 	void Clear() {
 		if (!Buf) return;
-		Info *T = GetInfo();
-		if (!T->DecCou()) 
+		Info* T = GetInfo();
+		if (!T->DecCou())
 			T->Destroy();
 		Buf = nullptr;
 	};
@@ -1114,7 +922,7 @@ public:
 	// переводит строку в нижний регистр
 	TSmartString& MakeLower() {
 		if (!Buf) return *this;
-		Info *P = DeBufCopy(Length());
+		Info* P = DeBufCopy(Length());
 		tt::LowerStr(P->Data, P->Len);
 		SetBuf(P);
 		return *this;
@@ -1123,7 +931,7 @@ public:
 	// переводит строку в нижний регистр
 	TSmartString& MakeUpper() {
 		if (!Buf) return *this;
-		Info *P = DeBufCopy(Length());
+		Info* P = DeBufCopy(Length());
 		tt::UpperStr(P->Data, P->Len);
 		SetBuf(P);
 		return *this;
@@ -1131,18 +939,17 @@ public:
 
 	void Reverse() {
 		if (!Buf) return;
-		Info *P = DeBufCopy(Length());
+		Info* P = DeBufCopy(Length());
 		tt::Reverse(P->Data);
 		SetBuf(P);
 		return *this;
 	}
 
 	// ищет значение Val в строке начиная с символа Pos. Там же найденный символ
-	bool Find(const BufPointer<Type>& Val, size_t& Pos)const {
-		return FindStr(Val.Data, Pos);
-	};	
-	
-	/*bool Find(const TSmartString& Val, size_t& Pos)const {
+	//bool Find(const BufPointer<Type>& Val, size_t& Pos)const {
+	//return FindStr(Val.Data, Pos);};	
+
+	bool Find(const TSmartString& Val, size_t& Pos)const {
 		return FindStr(Val.Buf, Pos);
 	};
 
@@ -1155,33 +962,32 @@ public:
 		return FindStr(_tmp, Beg);
 	};
 
-	INT64 Find(const BufPointer<Type>& Val, size_t Beg = 0)const {
-		return FindStr(Val.Data, Beg);
-	};
-*/
-	// ищет подстроку в строке начиная с конца(что ищем, символ начала поиска = 0)
-/*	bool FindOf(const TSmartString& Val, size_t& Pos)const {
-		return FindStrOf(Val.Buf, Pos);
-	};*/
-	bool FindOf(const BufPointer<Type>& Val, size_t& Pos)const {
-		return FindStrOf(Val.Data, Pos);
-	};
+	//INT64 Find(const BufPointer<Type>& Val, size_t Beg = 0)const {
+	//	return FindStr(Val.Data, Beg);};
 
-	/*INT64 FindOf(Base_CStr Val, size_t Beg = 0)const {
+	// ищет подстроку в строке начиная с конца(что ищем, символ начала поиска = 0)
+	bool FindOf(const TSmartString& Val, size_t& Pos)const {
+		return FindStrOf(Val.Buf, Pos);
+	};
+	//bool FindOf(const BufPointer<Type>& Val, size_t& Pos)const {
+	//	return FindStrOf(Val.Data, Pos);};
+
+	auto FindOf(Base_CStr Val, size_t Beg = 0)const {
 		return FindStrOf(Val, Beg);
 	};
 
-	INT64 FindOf(F_Str Val, size_t Beg = 0)const {
+	auto FindOf(F_Str Val, size_t Beg = 0)const {
 		TSmartString _tmp(Val);
 		return FindStrOf(_tmp, Beg);
-	};*/
+	};
 
 	//Ищет в строке позицию первого символа из указанной строки
-	INT64 FindOne(const Base_Str Val)const { return tt::FindOne(Buf, Val); };
+	auto FindOne(const Base_Str Val)const { return tt::FindOne(Buf, Val); };
+
 
 	//Ищет в строке позицию первого символа из указанной строки
-	INT64 FindOne(const BufPointer<Type>& Val, size_t Beg = -1, size_t Len = 0)const {
-		return tt::FindOne(Buf, Val.Data());};
+	/*auto FindOne(const BufPointer<Type>& Val)const {
+		return tt::FindOne(Buf, Val.Data);};
 
 	void RemoveChars(const BufPointer<Type>& Val) {
 		if (!Buf) return;
@@ -1204,7 +1010,7 @@ public:
 		Info *I;
 		size_t NewLen = T + int(Cou * (ValNew.Len - ValOld.Len));
 		I = DeBufCopy(NewLen);
-		
+
 		BegP = Buf, EndP = Buf + T;
 		while (BegP < EndP && (BegP = tt::Find(BegP, ValOld.Data))) {
 			if (ValNew.Len != ValOld.Len) {
@@ -1214,11 +1020,11 @@ public:
 			}
 			if (ValNew.Len) I->FillBuf(ValNew.Data, ValNew.Len, BegP - Buf);
 			BegP += ValNew.Len;	}
-		
+
 		I->Data[I->Len] = 0;
 		SetBuf(I);
 		return Cou;
-	}
+	}*/
 
 	// Возвращает строку до первого символа из указанной строки
 	TSmartString SpanExcluding(Base_CStr Val) {
@@ -1268,7 +1074,7 @@ public:
 			Buf = Info::Create(SZ + 1, StrFormat, SZ + 1)->Data;
 			StrFormat = Buf + (len - 1);
 		}
-		tt::Format(BufPointer<Type>(P->Data, P->Len), StrFormat, Par);
+		tt::Format(P->Data, P->LenBuf, StrFormat, Par);
 		P->Data[P->Len] = 0;
 		SetBuf(P);
 	};
@@ -1297,19 +1103,19 @@ public:
 			return;
 		}
 		size_t SZ = Length();
-		Info* P = DeBufCopy(len + SZ);
+		Info* P = NewBuf(len + SZ, true);
 		if (P->Data == Buf && IncludeBuf(StrFormat)) {
 			len = StrFormat - Buf;
 			Buf = Info::Create(SZ - len + 1, StrFormat, SZ - len + 1)->Data;
 			StrFormat = Buf;
 		}
-		tt::Format(BufPointer<Type>(P->Data + SZ, P->Len-SZ), StrFormat, Par);
-		P->Data[P->Len] = 0;
+		tt::Format(P->Data + SZ, P->LenBuf - SZ, StrFormat, Par);
+		P->Data[P->Len += len] = 0;
 		SetBuf(P);
 	};
 
 	//Вставляет подстроку Val начиная с позиции Pos удаляя  Count символов)
-	inline size_t Insert(const BufPointer<Type>& Val, size_t Pos,  size_t Count = 0) { return InsertPrv(Pos, Val.Data, Val.Len, Count); }
+	//inline size_t Insert(const BufPointer<Type>& Val, size_t Pos,  size_t Count = 0) { return InsertPrv(Pos, Val.Data, Val.Len, Count); }
 	//Вставляет подстроку Val длинной Val_Size, начиная с позиции Pos удаляя  Count символов)
 	inline size_t Insert(Base_CStr Val, size_t Pos, size_t Count, size_t Val_Size = StringLength(Val)) { return InsertPrv(Pos, Val, Val_Size, Count); }
 
@@ -1321,26 +1127,15 @@ public:
 
 ////////////////////////////////////// VRTSmartStr /// END /////////////////////////////////
 
-
-template<typename t = wchar_t>
-void _i64to_s(INT64 Value, LPWSTR Buffer, size_t BufferCount, int Radix) {
-	_i64tow_s(Value, Buffer, BufferCount, Radix);
-}
-
-template<typename t = char>
-void _i64to_s(INT64 Value, LPSTR Buffer, size_t BufferCount, int Radix) {
-	_i64toa_s(Value, Buffer, BufferCount, Radix);
-}
-
 template< typename BaseType, typename FriendType>
 class descriptionType {
 public:
 	using Base_Char = BaseType;
-	using Base_Str =  BaseType*;
+	using Base_Str = BaseType*;
 	using Base_CStr = const BaseType*;
 
 	using F_Char = FriendType;
-	using F_Str =  FriendType*;
+	using F_Str = FriendType*;
 	using F_CStr = const FriendType*;
 };
 
@@ -1356,26 +1151,27 @@ public:
 	using F_Char = typename dt::F_Char;
 	using F_Str = typename dt::F_Str;
 	using F_CStr = typename dt::F_CStr;
-	
-	static void NumberToStr(const INT64 val, byte sys, BufPointer<Base_Char> &Buf) {
+
+	/*static void NumberToStr(const INT64 val, byte sys, Base_Str Buf, size_t LenBuf) {
 		_ASSERTE(sys >= 2 && sys <= 36);
-		_i64toa_s(val, const_cast<Base_Str>(Buf.Data), Buf.Len + 1, sys);
+		_i64toa_s(val, Buf, LenBuf, sys);
 	}
 
-	static size_t NumberToStr(const double val, byte sys, BufPointer<Base_Char> &Buf) {
+	static size_t NumberToStr(const double val, byte sys, Base_Str Buf, size_t LenBuf) {
 		_ASSERTE(sys >= 0);
-		_gcvt_s(const_cast<char*>(Buf.Data), Buf.Len + 1, val, sys);
+		_gcvt_s(Buf, LenBuf, val, sys);
 		return StringLength(Buf.Data);
-	}
+	}*/
 
 	static size_t BaseTypeLen(F_CStr pszSrc, size_t Count, UINT Code = CP_ACP) {
 		if (pszSrc == nullptr) return 0;
 		int sz = WideCharToMultiByte(Code, 0, pszSrc, Count ? Count : -1, nullptr, 0, NULL, nullptr);
-		return  Count!=0 ? sz : sz - 1;
+		return  Count != 0 ? sz : sz - 1;
 	}
-	static void ToBaseType(BufPointer<Base_Char>& Buf, F_CStr pszSrc, size_t Count, UINT Code = CP_ACP) {
-		const_cast<Base_Str>(Buf.Data)[Buf.Len] = 0;
-		WideCharToMultiByte(Code, 0, pszSrc, Count ? Count : -1, const_cast<char*>(Buf.Data), Buf.Len + 1, NULL, nullptr);
+	static int ToBaseType(Base_Str Buf, size_t LenBuf, F_CStr pszSrc, size_t Count, UINT Code = CP_ACP) {
+		int sz = WideCharToMultiByte(Code, 0, pszSrc, Count ? Count : -1, Buf, LenBuf, NULL, nullptr);
+		if (Count)Buf[sz] = 0; else sz--;
+		return  sz;
 	}
 	static int CompareStr(Base_CStr Val1, Base_CStr Val2, size_t Len1, size_t Len2, bool noCase) {
 		return CompareStringA(LOCALE_CUSTOM_DEFAULT, noCase ? NORM_IGNORECASE : 0, Val1, Len1, Val2, Len2) - 2;
@@ -1391,12 +1187,9 @@ public:
 		Base_Str P = FindOneP(Val1, Val2);
 		return  !P ? -1 : (P - Val1);
 	}
-	static int FormatLen(Base_CStr Str, va_list Param) {
-		return _vscprintf(Str, Param);
-	};
-	static void Format(BufPointer<Base_Char>& Buf, Base_CStr Str, va_list Param) {
-		vsprintf_s((Base_Str)Buf.Data, Buf.Len + 1, Str, Param);
-	};
+	static int FormatLen(Base_CStr Str, va_list Param) { return _vscprintf(Str, Param); };
+
+	static void Format(Base_Str Buf, size_t LenBuf, Base_CStr Str, va_list Param) { vsprintf_s(Buf, LenBuf, Str, Param); };
 
 	static void LowerStr(Base_Str Val, size_t Size) { _strlwr_s(Val, Size); }
 	static void UpperStr(Base_Str Val, size_t Size) { _strupr_s(Val, Size); }
@@ -1404,7 +1197,7 @@ public:
 };
 
 template<>
-class TransformationType<WCHAR>{
+class TransformationType<WCHAR> {
 public:
 	using cl = descriptionType<WCHAR, char>;
 
@@ -1416,48 +1209,33 @@ public:
 	using F_Str = typename cl::F_Str;
 	using F_CStr = typename cl::F_CStr;
 
-	static void NumberToStr(const INT64 val, int sys, BufPointer<cl::Base_Char> &Buf) {
-		_ASSERTE(sys >= 2 && sys <= 36);
-		_i64tow_s(val, const_cast<Base_Str>(Buf.Data), Buf.Len+1, sys);
-	}
-
-	static size_t NumberToStr(const double val, int sys, BufPointer<cl::Base_Char> &Buf) {
-		_ASSERTE(sys >= 0);
-		cl::Base_Str Bf = const_cast<WCHAR*>(Buf.Data);
-		_gcvt_s((char*)Bf, Buf.Len, val, sys);
-		size_t Tm = StringLength((char*)Bf), a = Tm+ 1;
-		while (a) Bf[a] = ((char*)Bf)[--a];
-		return Tm;
-	}
-
-static size_t BaseTypeLen(F_CStr pszSrc, UINT Count, UINT Code = CP_ACP) {
+	static size_t BaseTypeLen(F_CStr pszSrc, UINT Count, UINT Code = CP_ACP) {
 		if (pszSrc == nullptr) return 0;
 		int sz = MultiByteToWideChar(Code, 0, pszSrc, Count ? Count : -1, nullptr, 0);
 		return  Count ? sz : sz - 1;
 	}
-static void ToBaseType(BufPointer<Base_Char>& Buf, F_CStr pszSrc, int Count, UINT Code = CP_ACP) {
-		MultiByteToWideChar(Code, 0, pszSrc, Count ? Count : -1, const_cast<Base_Str>(Buf.Data), Buf.Len + 1);
+	static int ToBaseType(Base_Str Buf, size_t lenBuf, F_CStr pszSrc, int Count, UINT Code = CP_ACP) {
+		int sz = MultiByteToWideChar(Code, 0, pszSrc, Count ? Count : -1, Buf, lenBuf);
+		if (Count)Buf[sz] = 0; else sz--;
+		return sz;
 	}
 	static int CompareStr(const Base_CStr Val1, cl::Base_CStr Val2, size_t Len1, size_t Len2, bool noCase) {
 		return CompareStringW(LOCALE_CUSTOM_DEFAULT, noCase ? NORM_IGNORECASE : 0, Val1, Len1, Val2, Len2) - 2;
 	}
-	static cl::Base_Str Find(Base_Str Val1, Base_CStr Val2) {
+	static Base_Str Find(Base_Str Val1, Base_CStr Val2) {
 		return wcsstr(Val1, Val2);
 	}
-	static cl::Base_CStr FindOneP(Base_CStr Val1, Base_CStr Val2) {
+	static Base_CStr FindOneP(Base_CStr Val1, Base_CStr Val2) {
 		return wcspbrk(Val1, Val2);
 	}
 	static size_t FindNotOne(Base_CStr Val1, Base_CStr Val2) { return  wcsspn(Val1, Val2); }
 	static INT64 FindOne(Base_CStr Val1, Base_CStr Val2) {
-		cl::Base_CStr P = FindOneP(Val1, Val2);
+		Base_CStr P = FindOneP(Val1, Val2);
 		return  !P ? -1 : (P - Val1);
 	}
-	static int FormatLen(Base_CStr Str, va_list Param) {
-		return _vscwprintf(Str, Param);
-	};
-	static void Format(BufPointer<Base_Char>& Buf, Base_CStr Str, va_list Param) {
-		vswprintf_s((Base_Str) Buf.Data, Buf.Len + 1, Str, Param);
-	};
+	static int FormatLen(Base_CStr Str, va_list Param) { return _vscwprintf(Str, Param); };
+	static void Format(Base_Str Buf, size_t lenBuf, Base_CStr Str, va_list Param) { vswprintf_s(Buf, lenBuf, Str, Param); };
+
 	static void LowerStr(Base_Str Val, size_t Size) { _wcslwr_s(Val, Size); }
 	static void UpperStr(Base_Str Val, size_t Size) { _wcsupr_s(Val, Size); }
 	static void Reverse(Base_Str Val) { _wcsrev(Val); }

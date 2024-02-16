@@ -7,15 +7,15 @@
 
 #ifdef UNICODE
 #define MultiStr	MultiStrW
-#define String		wstring
-#define to_str		to_wstring
+#define String		std::wstring
+#define to_str		std::to_wstring
 #else
 #define MultiStr  MultiStrA
-#define String  string
-#define to_str to_string
+#define String  std::string
+#define to_str std::to_string
 #endif // !UNICODE
 
-wstring MultiStrW(int count, ...) {
+std::wstring MultiStrW(int count, ...) {
 
 	struct mstr {
 		LPCWSTR  data; int size;
@@ -36,7 +36,7 @@ wstring MultiStrW(int count, ...) {
 		size += sz[i].size;
 	}
 
-	wstring res;
+	std::wstring res;
 	res.reserve(size);
 	for (auto i = 0; i < count; i++)
 		res.append(sz[i].data, sz[i].size);
@@ -44,7 +44,7 @@ wstring MultiStrW(int count, ...) {
 	return res;
 }
 
-string MultiStrA(int count, ...) {
+std::string MultiStrA(int count, ...) {
 
 	struct mstr {
 		LPCSTR  data; int size;
@@ -65,7 +65,7 @@ string MultiStrA(int count, ...) {
 		size += sz[i].size;
 	}
 
-	string res;
+	std::string res;
 	res.reserve(size);
 	for (auto i = 0; i < count; i++)
 		res.append(sz[i].data, sz[i].size);

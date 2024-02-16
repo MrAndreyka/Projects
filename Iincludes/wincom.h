@@ -7,10 +7,20 @@
 
 #ifdef UNICODE
 #define _T(x)       L##x
-#define String wstring
+#define String std::wstring
 #else
 #define _L(a) a
 #endif
+
+String TextError(DWORD Code);
+INT64 GetLineCurent(HWND Window, int Item = 0);
+
+/*
+String operator+ (LPCTSTR tstr, String str) {
+	String res(tstr);
+	res += str;
+	return res;	
+};*/
 
 #ifdef SmatrClasses
 
@@ -71,7 +81,6 @@ SmartStr GetTextS(HWND Window, int Item = 0) {
 	return s;
 }//-----------------------------------------------------------------------------------------------
 
-
 #endif
 
 int ShowMessage(HWND Window, PCTCH Text, PCTCH Caption = nullptr, UINT Type = MB_ICONINFORMATION) {
@@ -99,11 +108,11 @@ String TextError(DWORD Code) {
 		(LPTSTR)&lpMsgBuf, 0, NULL);
 	String _tmp((LPTSTR)lpMsgBuf);
 	if (lpMsgBuf) LocalFree(lpMsgBuf);
-	else _tmp += L"Неверный код ошибки : " + to_wstring(Code);
+	else _tmp += _T("Неверный код ошибки : ") + to_str(Code);
 	return _tmp;
 }
 
-/*/	Получает Текст Окна
+/*/Получает Текст Окна
 String GetText(HWND Window, int Item = 0){
 	if (Item) Window = GetDlgItem(Window, Item);
 	int L = GetWindowTextLength(Window);
@@ -111,7 +120,7 @@ String GetText(HWND Window, int Item = 0){
 	String s;
 	if (L) {
 		s.resize(L, 0);
-		s.resize(GetWindowText(Window, s.c_str(), L + 1)); }
+		s.resize(GetWindowText(Window, s.data(), L + 1)); }
 	return s;
 	}*///-----------------------------------------------------------------------------------------------
 
@@ -125,7 +134,7 @@ INT64 GetLineCount(HWND Window, int Item = 0) {
 	return SendMessage(Window, LB_GETCOUNT, 0, 0);
 	}//---------------------------------------------------------------------------------------------
 
-INT64 GetLineCurent(HWND Window, int Item = 0) {
+INT64 GetLineCurent(HWND Window, int Item) {
 	if (Item) Window = GetDlgItem(Window, Item);
 	return SendMessage(Window, LB_GETCURSEL, 0, 0);
 	}//---------------------------------------------------------------------------------------------
@@ -154,4 +163,5 @@ size_t AddLine(HWND Window, String Text, int SetHorizontal = -1){
 		}
 	return L;
 	}//-----------------------------------------------------------------------------------------------
+
 #endif

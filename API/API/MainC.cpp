@@ -116,7 +116,7 @@ private:
 
 list<MyLivePoint<bool>> lst;
 
-BOOL pause = true, showInfo = false, step_stop = false, lines = true;
+BOOL pause = false, showInfo = false, step_stop = false, lines = true;
 
 void get_graph() {
 	auto prev_pen = SelectObject(secondHdc, GetStockObject(DC_PEN));

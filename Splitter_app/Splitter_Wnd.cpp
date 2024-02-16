@@ -14,10 +14,9 @@ TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 HWND  g_hmain = NULL;
 
-
 INT		main_Wnd_clr[3] = {236, 233, 216};
 INT		left_Wnd_clr[3] = {255, 255, 255};
-INT		right_Wnd_clr[3] = {255, 255, 255};;
+INT		right_Wnd_clr[3] = {255, 255, 255};
 
 
 // Forward declarations of functions included in this code module:

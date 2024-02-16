@@ -3,7 +3,7 @@
 #include "MyExcept.h"
 #include <string.h>
 
-typedef unsigned char byte;
+typedef unsigned char u_char;
 
 void Aut::operator =(const Aut &val){
 	if (this==&val)return;
@@ -60,7 +60,7 @@ TMyEx::TMyEx(int eCode, const char *vStr, const char *ClassName, void *vData, in
 	else Str = nullptr;
 	if (Dsz>0)
 		{
-		Data = new byte[Dsz];
+		Data = new u_char[Dsz];
 		memcpy(Data, vData, Dsz);
 		}
 	else Data = vData;
