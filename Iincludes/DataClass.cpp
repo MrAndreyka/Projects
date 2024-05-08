@@ -12,7 +12,7 @@ void ForwardList<T>::push_after(const T& val, ForwardList<T>::Cell<T>* elem) {
 }
 
 template <class T>
-ForwardList<T>::~ForwardList() {
+ForwardList<T>::~ForwardList<T>() {
 	if (_begin == nullptr) return;
 	for (Cell<T>* p, *i = p = _begin; i != nullptr; p = i)
 	{

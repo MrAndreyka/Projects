@@ -26,8 +26,8 @@ public:
 	void MoveV(HWND hwnd, WPARAM wParam, LPARAM lParam);
 	void MoveH(HWND hwnd, WPARAM wParam, LPARAM lParam);
 
-	static function<ContSpliter * (HWND)> ProcGet = nullptr;
-	//static ContSpliter* (*ProcGet)(HWND)=nullptr;
+	//static function<ContSpliter * (HWND)> ProcGet = nullptr;
+	static ContSpliter* (*ProcGet)(HWND)=nullptr;
 	static void Reg_Class(HINSTANCE hInst);
 };
 

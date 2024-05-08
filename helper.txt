@@ -1,0 +1,40 @@
+===============================================================
+Индекс типа в списке шаблоне типов
+
+template <unsigned short N, typename Type, typename... >
+struct get_index_by_type_struct {
+	constexpr static const unsigned short value = 0;
+	get_index_by_type_struct() {throw "error_invalid_type_as_index";}
+};
+
+template <unsigned short N, typename Type, typename First, typename... Other>
+struct get_index_by_type_struct<N, Type, First, Other...>{
+	constexpr static const unsigned short value = std::is_same_v<First, Type> ? N : get_index_by_type_struct<N + 1, Type, Other...>::value;
+};
+===============================================================
+Создание функции с залоченными параметрами
+auto func = std::bind(&t2::Att, p, std::placeholders::_1, std::placeholders::_2)
+==============================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===============================================================
+Проверка равенства типов
+std::is_same_v<First, Type>
+===============================================================
+Описатель типов выдает тип указанного выражения
+std::decltype( expression )
+===============================================================

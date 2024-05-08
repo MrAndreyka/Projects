@@ -11,6 +11,8 @@ private:
 	public:
 		Cell() {};
 		Cell(const T& val) :value(val) {};
+		template<typename... Args>
+		Cell(const Args&... args) : value(T(args...)) {}
 		T& operator*() const noexcept { return value; };
 		T& at() { return value; }
 	};
@@ -25,12 +27,19 @@ public:
 		Cell<T>* pos;
 		iteratorFL(Cell<T>* _pos) : pos(_pos) {}
 	public:
+		using _Mybase = iteratorFL<T, To>;
+		using iterator_category = std::forward_iterator_tag;
+		using value_type = typename To;
+		using difference_type = typename T;
+		using pointer = typename T*;
+		using reference = value_type&;
+
 		iteratorFL() {}
 		iteratorFL(const iteratorFL& val) :pos(val.pos) {}
 
 		bool operator!=(iteratorFL const& other) const noexcept { return pos != other.pos; };
 		bool operator==(iteratorFL const& other) const noexcept { return pos == other.pos; };
-		To& operator*() const noexcept { return pos != nullptr ? pos->at(): T(NULL); };
+		To& operator*() const noexcept { return pos->at(); }//(pos != nullptr) ? pos->at() : T(NULL);};
 		To& operator->() const noexcept { return pos->at(); };
 		iteratorFL& operator++() { pos = pos->next; return *this; };
 		iteratorFL next() { return pos->next; }
@@ -56,6 +65,12 @@ public:
 
 	ForwardList() { _begin = _end = nullptr; }
 	ForwardList(const T& val) { _begin = _end = new Cell<T>(val); }
+	//template<typename... Args>
+	//ForwardList(const Args& ... args) { _begin = _end = new Cell<T>(args...); }
+	ForwardList(const std::initializer_list<T> args) {
+		for (auto& v : args)
+			push_back(v);
+	}
 	ForwardList(const ForwardList& val) { _begin = _end = nullptr; *this = val; }
 	ForwardList(ForwardList&& val) {_begin = _end = nullptr; *this = val; }
 
@@ -69,8 +84,11 @@ public:
 	const_iterator cbefore_end() const noexcept { return _end; }
 
 	void push_back(const T& val) { _end = (_end == nullptr) ? _begin = new Cell<T>(val) : (_end->next = new Cell<T>(val)); }
+	template<typename... Args>
+	void push_back(const Args&... args) { _end = (_end == nullptr) ? _begin = new Cell<T>(args...) : (_end->next = new Cell<T>(args...)); }
 	void push_begin(const T& val);
 	void push_after(const T& val, const iterator& elem) { push_after(val, elem.pos); }
+
 	
 	void clear();
 

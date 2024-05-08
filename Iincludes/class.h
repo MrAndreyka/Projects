@@ -18,7 +18,7 @@ class VRTSmartStr;
 struct InfoData {
 	long Cou;
 	size_t Len;
-	void Set(size_t Len_, short Cou_) {
+	void Set(size_t Len_, long Cou_) {
 		Len = Len_; Cou = Cou_;
 	}
 
@@ -251,7 +251,7 @@ size_t StringLength(_In_opt_z_ const LPCWSTR psz, size_t Size = 0) throw() {
 	return Size ? wcsnlen(psz, Size) : wcslen(psz);
 }
 
-size_t NumberToStr(const INT64 val, byte sys, LPSTR Buf, size_t LenBuf) {
+size_t NumberToStr(const INT64 val, unsigned char sys, LPSTR Buf, size_t LenBuf) {
 	_ASSERTE(sys >= 2 && sys <= 36);
 	_i64toa_s(val, Buf, LenBuf, sys);
 	return StringLength(Buf);
@@ -263,7 +263,7 @@ size_t NumberToStr(const INT64 val, int sys, LPWSTR Buf, size_t lenBuf) {
 	return StringLength(Buf);
 }
 
-size_t NumberToStr(const double val, byte sys, LPSTR Buf, size_t LenBuf) {
+size_t NumberToStr(const double val, unsigned char sys, LPSTR Buf, size_t LenBuf) {
 	_ASSERTE(sys >= 0);
 	_gcvt_s(Buf, LenBuf, val, sys);
 	return StringLength(Buf);
@@ -507,11 +507,11 @@ public:
 	//operator LPARAM() { return (LPARAM)Data(); };
 	~VRTSmartStr() { Clear(); };
 
-	VRTSmartStr() {};
+	VRTSmartStr() noexcept {};
 
-	VRTSmartStr(const TSmartString& Val) {this->operator=(Val);};
+	VRTSmartStr(const TSmartString& Val) noexcept {this->operator=(Val);};
 
-	VRTSmartStr(TSmartString&& Val) {this->operator=(Val);};
+	VRTSmartStr(TSmartString&& Val) noexcept{this->operator=(Val);};
 
 	VRTSmartStr(Base_CStr Val, size_t Size = 0) {
 		if (!Size) Size = StringLength(Val);
